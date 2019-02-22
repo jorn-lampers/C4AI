@@ -1,6 +1,7 @@
 
 #include "C4AI.h"
 #include "TreeSearch.h"
+#include "C4Abstract.h"
 
 Move C4AI::FindBestMove(const Match & match)
 {
@@ -11,7 +12,7 @@ Move C4AI::FindBestMove(const Match & match)
     std::vector<Move> moves = getMoves(match.board);
 
     // Edge cases...
-    if(moves.size() == 0) std::cerr << "ERROR: Board appears to be full, yet AI is asked to pick a move!" << std::endl;
+    if(moves.empty()) std::cerr << "ERROR: Board appears to be full, yet AI is asked to pick a move!" << std::endl;
     if(moves.size() == 1) return moves[0]; // Might occur later in matches
 
     // Rate all moves, safe their scores
@@ -54,15 +55,15 @@ Move C4AI::FindBestMove(const Match & match)
         if(moveRatings[i] == highestRating)
             bestMoves.push_back(moves[i]);
 
-    if(bestMoves.size() == 0) std::cerr << "ERROR: Best moves list is empty!" << std::endl;
+    if(bestMoves.empty()) std::cerr << "ERROR: Best moves list is empty!" << std::endl;
     else if(bestMoves.size() == 1) bestMove = bestMoves[0];
     else {
-        std::cerr << "Moves yielding equal results have been found, picking one using trapping heuristics: " << std::endl;
+        std::cerr << "Moves yielding equal results have been found, picking one using secondary heuristics: " << std::endl;
         int highest;
         int startPass2 = match.timeElapsedThisTurn();
         for (Move m : bestMoves) {
             State moveResult = doMove(match.board, m);
-            int score = TreeSearch::MiniMaxAB(moveResult, RateByPotentialTraps, GetChildStates, 7, false, me, Score::Min, Score::Max);
+            int score = TreeSearch::MiniMaxAB(moveResult, RateSecondaryHeuristic, GetChildStates, 3, false, me, Score::Min, Score::Max);
             std::cerr << "  - Move " << m << " yields a heuristic score of: " << score << "." << std::endl;
             if (score > highest || bestMove == -1) {
                 highest = score;
@@ -81,8 +82,16 @@ int C4AI::EvaluateState(const State & state, const Player & positive)
 {
     Player winner = getWinner(state);                                       // Is there a winner?
     if(winner == positive) return Score::Guaranteed_Win;                    // Bot has won in evaluated state
-    if(winner == Player::None) return RateTotalHeuristic(state, positive);  // No winner, rate state with heuristics
+    if(winner == Player::None) return RatePrimaryHeuristic(state, positive);// No winner, rate state with heuristics
     return Score::Should_Lose;                                              // Opponent has won in evaluated state
+}
+
+int C4AI::RateFinishedGame(const State & state, const Player & positive)
+{
+    Player winner = getWinner(state);
+    if(winner == positive) return Score::Guaranteed_Win;
+    if(winner == Player::None) return 0;                                    // Finished game resulted in a tie
+    return Score::Should_Lose;
 }
 
 std::vector<State> C4AI::GetChildStates(const State &state)
@@ -93,11 +102,17 @@ std::vector<State> C4AI::GetChildStates(const State &state)
     return children;
 }
 
-int C4AI::RateTotalHeuristic(const State &state, const Player &positive)
+int C4AI::RatePrimaryHeuristic(const State &state, const Player &positive)
 {
-    if(getMoves(state).empty()) return 0;
-    int score = RateByPotentialFours(state, positive);
-    return score;
+    if(getMoves(state).empty()) return RateFinishedGame(state, positive);
+    int trapScore = RateByPotentialTraps(state, positive);
+    int fourScore = RateByPotentialFours(state, positive);
+    return trapScore + fourScore;
+}
+
+int C4AI::RateSecondaryHeuristic(const State &state, const Player &positive) {
+    if(getMoves(state).empty()) return RateFinishedGame(state, positive);
+    else return RateByPotentialTraps(state, positive);
 }
 
 int C4AI::RateByPotentialFours(const State &state, const Player &positive) {
@@ -182,132 +197,21 @@ int C4AI::RateByPotentialFours(const State &state, const Player &positive) {
 
 int C4AI::RateByPotentialTraps(const State &state, const Player &positive)
 {
-    int traps3Positive = 0, traps3Negative = 0;
-    Player currentPlayer = getCurrentPlayer(state);
-    Player negative = positive == Player::X ? Player::O : Player::X;
+    /// First trap in each column gets awarded 1 point,
+    /// 2 concurrent traps of the same player in a column gets awarded 3 points
+    int score = 0;
+    auto traps = C4Abstract::LocateTrapsInState(state, false);
+    auto progression = C4Abstract::GetColumnProgressions(state);
 
-    // Check for imminent win (next state)
-    for(State s:GetChildStates(state))
-        if(getWinner(s) == currentPlayer)
-            return (currentPlayer == positive ? Score::Guaranteed_Win : Score::Should_Lose);
-
-    // Store amount of coins in their corresponding columns
-    std::array<int, 7> colFirstEmpty = {5, 5, 5, 5, 5, 5, 5}; // The 'first' index of the column that's free
-    for(int col = 0; col < 7; col++)
-        for(int h = 5; h >= 0; h--)
-            if(state[h][col] == Player::None) break;
-            else colFirstEmpty[col] = h-1; // A ful col will have a value of -1
-
-
-    // Real search starts here:
-    int posImminentTrapCol = -1, negImminentTrapCol = -1; // If this isn't -1 and another forced reaction is found, current player will lose
-
-    int posPlayerCount = 0;
-    int negPlayerCount = 0;
-
-    // Horizontal traps
-    for(int x = 0; x < 4; x++)  // x = 0tm3 -> 3tm6
-        for(int y = 5; y > colFirstEmpty[x]; y--)
-        {
-            // Check every horizontal potential trap-group of 4 on current board:
-            posPlayerCount = 0;
-            negPlayerCount = 0;
-            int tc = -1;
-            for(int dx = 0; dx < 4; dx++) {
-                if (state[y][x + dx] == positive) posPlayerCount++;
-                else if (state[y][x + dx] == negative) negPlayerCount++;
-                else tc = dx + x;
-            }
-            // Did we find anything interesting? (Horizontally aligned traps for either player)
-            if(posPlayerCount == 3 && negPlayerCount == 0) // Found trap (player)
-            {
-                // Find difference in height to be made for trap to become a win or a forced move
-                int trapColHeight = colFirstEmpty[tc]; // Current height of trap col
-                int trapDistance = trapColHeight - y;
-                if(trapDistance == 1) { // Trap can be blocked/activated in current state (depending on current player)
-                    if (currentPlayer == positive) return Score::Guaranteed_Win; // Winning move can be made in passed state
-                    else if (posImminentTrapCol != -1 && posImminentTrapCol != tc) return Score::Guaranteed_Win; // Opponent is in a split, and forced to lose
-                    else posImminentTrapCol = tc; // Opponent has to react to this trap if he cannot win this turn TODO: Inspect deeper?
-                }
-                traps3Positive+=7-trapDistance; // Found a positive trap
-            }
-            else if(negPlayerCount == 3 && posPlayerCount == 0) // Found trap (opponent)
-            {
-                // Find difference in height to be made for trap to become a win or a forced move
-                int trapColHeight = colFirstEmpty[tc]; // Current height of trap col
-                int trapDistance = trapColHeight - y;
-                if(trapDistance == 1) { // Trap can be blocked/activated in current state (depending on current player)
-                    if (currentPlayer != positive) return Score::Should_Lose; // Winning move can be made by opponent in passed state
-                    else if (negImminentTrapCol != -1 && negImminentTrapCol != tc) return Score::Should_Lose; // Opponent is in a split, and forced to lose
-                    else negImminentTrapCol = tc; // Opponent has to react to this trap if he cannot win this turn TODO: Inspect deeper?
-                }
-                traps3Negative+=7-trapDistance; // Found a positive trap
-            }
-        }
-
-    // Diagonal traps
-    for(int x = 0; x < 4; x++)
-        for(int y = 0; y < 6; y++)
-        {
-            for (int dir = -1; dir <= 1; dir += 2)  // Check the two diagonal directions
-            {
-                if(dir == -1 && y < 3) continue; // Less than four slots in direction were checking
-                if(dir == +1 && y > 2) continue; // Less than four slots in direction were checking
-
-                posPlayerCount = 0;
-                negPlayerCount = 0;
-                int tc = -1; // The column where a trap could reside
-                int tr = -1; // The row ''
-                for (int d = 0; d < 4; d++)
-                {
-                    if(state[y+d*dir][x+d] == positive) posPlayerCount++;
-                    else if(state[y+d*dir][x+d] == negative) negPlayerCount++;
-                    else {
-                        tc = d+x; // Empty, could be trap col
-                        tr = y+d*dir;
-                    }
-                }
-
-                // Did we find anything interesting? (Diagonal traps for either player)
-                if (posPlayerCount == 3 && negPlayerCount == 0) // Found trap (player)
-                {
-                    // Find difference in height to be made for trap to become a win or a forced move
-                    int trapColHeight = colFirstEmpty[tc]; // Current height of trap col
-                    int trapDistance = trapColHeight - tr; // currentHeight - trap row
-                    if (trapDistance == 1) { // Trap can be blocked/activated in current state (depending on current player)
-                        if (currentPlayer == positive) return Score::Guaranteed_Win; // Winning move can be made in passed state
-                        else if (posImminentTrapCol != -1 && posImminentTrapCol != tc) return Score::Guaranteed_Win; // Opponent is in a split, and forced to lose
-                        else posImminentTrapCol = tc; // Opponent has to react to this trap if he cannot win this turn TODO: Inspect deeper?
-                    }
-                    traps3Positive+=7-trapDistance;
-                } else if (negPlayerCount == 3 && posPlayerCount == 0) // Found trap (opponent)
-                {
-                    // Find difference in height to be made for trap to become a win or a forced move
-                    int trapColHeight = colFirstEmpty[tc]; // Current height of trap col
-                    int trapDistance = trapColHeight - tr; // currentHeight - trap row
-                    if (trapDistance == 1) { // Trap can be blocked/activated in current state (depending on current player)
-                        if (currentPlayer != positive) return Score::Should_Lose; // Winning move can be made by opponent in passed state
-                        else if (negImminentTrapCol != -1 && negImminentTrapCol != tc) return Score::Should_Lose; // Opponent is in a split, and forced to lose
-                        else negImminentTrapCol = tc; // Opponent has to react to this trap if he cannot win this turn TODO: Inspect deeper?
-                    }
-                    traps3Negative+=7-trapDistance;
-                }
-            }
-        }
-
-    // "Vertical traps"
-    for(int col = 0; col < 7; col++) {
-        if(state[col][0] != Player::None) continue; // This column is full
-        for(int row = 0; row < 6-3; row++) {
-            if(state[row][col] != Player::None) {
-                if(state[row][col] == state[row+1][col] && state[row][col] == state[row+2][col])
-                    if(state[row][col] == negative) {
-                        traps3Negative+=6;
-                    }
-                    else traps3Positive+=6;
-            } else continue;
-        }
+    for(TrappedSlot ts : traps) {
+        if(ts.player == Player::Both) continue;
+        int trapHeight = 6 - ts.position.row;
+        int coinsToTrap = trapHeight - progression[ts.position.column];
+        int points = 6 - coinsToTrap;
+        if(ts.player == positive) score += points;
+        else score -= points;
     }
 
-    return traps3Positive - traps3Negative; // TODO: traps shouldn't all be of equal worth
+    return score;
+
 }

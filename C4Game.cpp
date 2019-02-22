@@ -10,6 +10,8 @@ std::ostream & operator << (std::ostream& os, const Player &p) {
 		os << "X";
 	} else if (p == Player::O) {
 		os << "O";
+	} else if (p == Player::Both) {
+	    os << "B";
 	}
 	return os;
 }
@@ -86,4 +88,3 @@ std::vector<Move> getMoves(const State &state)
 				moves.push_back(i);
     return moves;
 }
-

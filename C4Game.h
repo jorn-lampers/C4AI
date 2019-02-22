@@ -11,7 +11,11 @@
 #include <iterator>
 #include <iostream>
 
-enum class Player { None, X, O };
+enum class Player
+{
+    None, X, O, Both
+};
+
 using Move = int;
 using State = std::array<std::array<Player,7>,6>;
 

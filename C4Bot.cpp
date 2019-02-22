@@ -18,6 +18,7 @@ void C4Bot::move(int timeout) {
     int ms = match.timeElapsedThisTurn();
 
     std::cerr << "______________________________________________________________________________________________" << std::endl;
+    std::cerr << "Search yields optimal column to do move: #" << m << std::endl;
     std::cerr << "Search for move finished in " << ms << " milliseconds." << std::endl;
     std::cerr << "Awaiting next turn..." << std::endl;
     std::cerr << "______________________________________________________________________________________________" << std::endl << std::endl;
