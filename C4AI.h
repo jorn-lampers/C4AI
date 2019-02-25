@@ -15,7 +15,8 @@ class C4AI {
     enum Score {
         Min = -999999, Max = 999999,
         Neutral = 0, Guaranteed_Win = 1000, Should_Lose = -1000,
-        Heur_P4_Me = 1, Heur_P4_Opp = -1, Heur_P4_Abs_V = 1, Heur_P4_Abs_H = 2, Heur_P4_Abs_D = 2
+        Heur_P4_Me = 1, Heur_P4_Opp = -1, Heur_P4_Abs_V = 1, Heur_P4_Abs_H = 2, Heur_P4_Abs_D = 2,
+        Heur_T_Row_Height_Mod = 4
     };
 
 public:
@@ -32,7 +33,7 @@ public:
     static int RatePrimaryHeuristic(const State &state, const Player &positive);
 
     /// AI's secondary heuristic function, this function has a relatively high cost ...
-    /// and should only be used to break ties betweek moves yielding equal results ...
+    /// and should only be used to break ties between moves yielding equal results ...
     /// while evaluated by the primary heuristic function.
     static int RateSecondaryHeuristic(const State &state, const Player &positive);
 

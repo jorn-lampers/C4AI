@@ -107,7 +107,7 @@ int C4AI::RatePrimaryHeuristic(const State &state, const Player &positive)
     if(getMoves(state).empty()) return RateFinishedGame(state, positive);
     int trapScore = RateByPotentialTraps(state, positive);
     int fourScore = RateByPotentialFours(state, positive);
-    return trapScore + fourScore;
+    return trapScore*5 + fourScore;
 }
 
 int C4AI::RateSecondaryHeuristic(const State &state, const Player &positive) {
@@ -207,7 +207,7 @@ int C4AI::RateByPotentialTraps(const State &state, const Player &positive)
         if(ts.player == Player::Both) continue;
         int trapHeight = 6 - ts.position.row;
         int coinsToTrap = trapHeight - progression[ts.position.column];
-        int points = 6 - coinsToTrap;
+        int points = (6 - coinsToTrap)*Score::Heur_T_Row_Height_Mod;
         if(ts.player == positive) score += points;
         else score -= points;
     }
