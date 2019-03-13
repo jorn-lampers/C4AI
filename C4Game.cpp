@@ -3,7 +3,8 @@
 
 #include "C4Game.h"
 
-std::ostream & operator << (std::ostream& os, const Player &p) {
+std::ostream & operator << (std::ostream& os, const Player &p)
+{
 	if (p == Player::None) {
 		os << ".";
 	} else if (p == Player::X) {
@@ -16,7 +17,8 @@ std::ostream & operator << (std::ostream& os, const Player &p) {
 	return os;
 }
 
-std::ostream & operator << (std::ostream& os, const State &s) {
+std::ostream & operator << (std::ostream& os, const State &s)
+{
 	for (int r=0; r<6; r++) {
 		for (int c=0; c<7; c++) {
 			os << s[r][c];
@@ -56,7 +58,8 @@ Player getWinner(const State &state)
 	for (int r=0; r<6; r++) {
 		for (int c=0; c<7; c++) {
 			if (state[r][c] != Player::None) {
-				if (c<4) {
+				if (c<4)
+				{
 					if (state[r][c] == state[r][c+1] && state[r][c] == state[r][c+2] && state[r][c] == state[r][c+3])
 						return state[r][c];
 					if (r<3) {
@@ -64,7 +67,8 @@ Player getWinner(const State &state)
 							return state[r][c];
 					}
 				}
-				if (r<3) {
+				if (r<3)
+				{
 					if (state[r][c] == state[r+1][c] && state[r][c] == state[r+2][c] && state[r][c] == state[r+3][c])
 						return state[r][c];
 					if (c>2) {

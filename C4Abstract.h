@@ -32,17 +32,18 @@ public:
     /// Locates all traps in a game-state.
     /// Arguments:
     /// - state: the state to search
-    /// - filterDoubles:
-    ///     if false, function returns traps that are trapped by both players
-    static std::vector<TrappedSlot> LocateTrapsInState(const State & state, bool filterDoubles);
+    static std::vector<TrappedSlot> LocateTraps(const State &state);
+
+    /// Locates only the first traps in each column of a game-state.
+    /// Arguments:
+    /// - state: the state to search
+    static std::vector<TrappedSlot> LocateLowestTraps(const State &state);
 
     /// Examines if slot is trapped by either Player, Both, or None
     static Player GetSlotTrappedByPlayer(const State &state, const Position &slot);
 
     /// Returns the amount of coins that have been dropped in each column of a game-state
     static std::array<int, 7> GetColumnProgressions(const State &state);
-
 };
-
 
 #endif //C4TEST_C4ABSTRACT_H

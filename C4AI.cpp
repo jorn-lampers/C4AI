@@ -25,7 +25,7 @@ Move C4AI::FindBestMove(const Match & match)
 
         for (int i = 0; i < moves.size(); i++) {
             State child = doMove(match.board, moves[i]);
-            moveRatings[i] = TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, me, Score::Min, Score::Max);
+            moveRatings[i] = TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, me, Score::Should_Lose, Score::Guaranteed_Win);
             if(moveRatings[i] == Score::Guaranteed_Win) {
                 std::cerr << "Found a route to a guaranteed win... Breaking off search!" << std::endl;
                 return moves[i];
@@ -200,10 +200,11 @@ int C4AI::RateByPotentialTraps(const State &state, const Player &positive)
     /// First trap in each column gets awarded 1 point,
     /// 2 concurrent traps of the same player in a column gets awarded 3 points
     int score = 0;
-    auto traps = C4Abstract::LocateTrapsInState(state, false);
+    auto traps = C4Abstract::LocateTraps(state);
     auto progression = C4Abstract::GetColumnProgressions(state);
 
-    for(TrappedSlot ts : traps) {
+    for(TrappedSlot ts : traps)
+    {
         if(ts.player == Player::Both) continue;
         int trapHeight = 6 - ts.position.row;
         int coinsToTrap = trapHeight - progression[ts.position.column];
