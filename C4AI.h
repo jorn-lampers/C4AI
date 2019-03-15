@@ -16,7 +16,7 @@ class C4AI {
         Min = -999999, Max = 999999,
         Neutral = 0, Guaranteed_Win = 1000, Should_Lose = -1000,
         Heur_P4_Me = 1, Heur_P4_Opp = -1, Heur_P4_Abs_V = 1, Heur_P4_Abs_H = 2, Heur_P4_Abs_D = 2,
-        Heur_T_Row_Height_Mod = 4
+        Heur_T_Row_Height_Mod = 1
     };
 
 public:

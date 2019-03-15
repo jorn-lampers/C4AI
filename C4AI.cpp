@@ -23,16 +23,26 @@ Move C4AI::FindBestMove(const Match & match)
         if(searchDepth > INITIAL_SEARCH_DEPTH) std::cerr << "Enough time left to do another pass with depth: " << searchDepth << "." << std::endl;
         std::cerr << "Starting pass #" << searchDepth - INITIAL_SEARCH_DEPTH + 1 << " with a search depth of " << searchDepth << "." << std::endl;
 
+        bool searchTreeExhausted = true;
+
         for (int i = 0; i < moves.size(); i++) {
+            bool fullMoveTreeEvaluated = true;
             State child = doMove(match.board, moves[i]);
-            moveRatings[i] = TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, me, Score::Should_Lose, Score::Guaranteed_Win);
+            moveRatings[i] = TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, me, Score::Should_Lose, Score::Guaranteed_Win, &fullMoveTreeEvaluated);
             if(moveRatings[i] == Score::Guaranteed_Win) {
                 std::cerr << "Found a route to a guaranteed win... Breaking off search!" << std::endl;
                 return moves[i];
             }
+            if(!fullMoveTreeEvaluated) searchTreeExhausted = false;
+            else std::cerr << "Exhausted search tree of move #" << i << "." << std::endl;
         }
         std::cerr << "Finished pass #" << searchDepth - INITIAL_SEARCH_DEPTH + 1 << "." << std::endl;
         std::cerr << "Time elapsed: " << match.timeElapsedThisTurn() << "/" << match.time_per_move << " ms." << std::endl;
+        if(searchTreeExhausted)
+        {
+            std::cerr << "Entire search tree was exhausted! Bot knows how this game will end if played perfectly by both sides." << std::endl;
+            break;
+        } else std::cerr << "MiniMax did not find definite outcome for a perfectly played match..." << std::endl;
         searchDepth++; // Increase search depth for next iteration.
     }
     while ( // Keep searching 1 level deeper if there's enough time left, do not risk loosing time-bank time during first 2 rounds, its not worth it
@@ -58,12 +68,13 @@ Move C4AI::FindBestMove(const Match & match)
     if(bestMoves.empty()) std::cerr << "ERROR: Best moves list is empty!" << std::endl;
     else if(bestMoves.size() == 1) bestMove = bestMoves[0];
     else {
+        bool fullMoveTreeEvaluated = true;
         std::cerr << "Moves yielding equal results have been found, picking one using secondary heuristics: " << std::endl;
         int highest;
         int startPass2 = match.timeElapsedThisTurn();
         for (Move m : bestMoves) {
             State moveResult = doMove(match.board, m);
-            int score = TreeSearch::MiniMaxAB(moveResult, RateSecondaryHeuristic, GetChildStates, 3, false, me, Score::Min, Score::Max);
+            int score = TreeSearch::MiniMaxAB(moveResult, RateSecondaryHeuristic, GetChildStates, 3, false, me, Score::Min, Score::Max, &fullMoveTreeEvaluated);
             std::cerr << "  - Move " << m << " yields a heuristic score of: " << score << "." << std::endl;
             if (score > highest || bestMove == -1) {
                 highest = score;
@@ -106,13 +117,12 @@ int C4AI::RatePrimaryHeuristic(const State &state, const Player &positive)
 {
     if(getMoves(state).empty()) return RateFinishedGame(state, positive);
     int trapScore = RateByPotentialTraps(state, positive);
-    int fourScore = RateByPotentialFours(state, positive);
-    return trapScore*5 + fourScore;
+    return trapScore;
 }
 
 int C4AI::RateSecondaryHeuristic(const State &state, const Player &positive) {
     if(getMoves(state).empty()) return RateFinishedGame(state, positive);
-    else return RateByPotentialTraps(state, positive);
+    else return RateByPotentialFours(state, positive);
 }
 
 int C4AI::RateByPotentialFours(const State &state, const Player &positive) {
