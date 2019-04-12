@@ -1,8 +1,6 @@
-//
-// Created by Jorn on 09/02/2019.
-//
-
 #include "C4Abstract.h"
+
+#include <iostream>
 
 std::vector<TrappedSlot> C4Abstract::LocateTraps(const State &state)
 {
@@ -17,27 +15,6 @@ std::vector<TrappedSlot> C4Abstract::LocateTraps(const State &state)
                 ts.player = trapper;
                 ts.position = pos;
                 traps.push_back(ts);
-            }
-        }
-    }
-
-    return traps;
-}
-
-std::vector<TrappedSlot> C4Abstract::LocateLowestTraps(const State &state)
-{
-    std::vector<TrappedSlot> traps;
-    for(int col = 0; col < state[0].size(); col++){
-        for(int row = state.size(); row > -1; row--) {
-            Position pos = Position(row, col);
-            Player trapper = GetSlotTrappedByPlayer(state, pos);
-            if(trapper != Player::None)
-            {
-                TrappedSlot ts;
-                ts.player = trapper;
-                ts.position = pos;
-                traps.push_back(ts);
-                break;  // First trap of this column has been found, move on to the next column
             }
         }
     }

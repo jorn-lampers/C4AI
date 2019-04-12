@@ -1,7 +1,6 @@
-// c4.cpp
-// Aswin van Woudenberg
-
 #include "C4Game.h"
+
+#include <iostream>
 
 std::ostream & operator << (std::ostream& os, const Player &p)
 {

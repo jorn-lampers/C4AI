@@ -1,10 +1,8 @@
+#ifndef C4BOT_H
+#define C4BOT_H
 
-#ifndef C4TEST_C4BOT_H
-#define C4TEST_C4BOT_H
-
-#include <string>
-#include <vector>
 #include <chrono>
+
 #include "C4Game.h"
 
 struct Match {
@@ -39,4 +37,4 @@ private:
 };
 
 
-#endif //C4TEST_C4BOT_H
+#endif

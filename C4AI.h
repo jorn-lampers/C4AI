@@ -1,14 +1,12 @@
 
-#ifndef C4TEST_C4AI_H
-#define C4TEST_C4AI_H
+#ifndef C4AI_H
+#define C4AI_H
 
-#include "C4Game.h"
 #include "C4Bot.h"
 
 /// This class defines some Heuristic functions to analyse game-states in connect4.
 /// These functions may be used alongside some search algorithm when winning states
 /// can't be found yet due to the games branching factor
-
 const static int INITIAL_SEARCH_DEPTH = 6;
 
 class C4AI {
@@ -51,4 +49,4 @@ public:
 
 };
 
-#endif //C4TEST_C4AI_H
+#endif

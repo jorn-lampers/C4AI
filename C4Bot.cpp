@@ -1,9 +1,9 @@
 #include "C4Bot.h"
-#include "C4AI.h"
 
-#include <iostream>
-#include <cmath>
 #include <sstream>
+#include <iostream>
+
+#include "C4AI.h"
 
 void C4Bot::move(int timeout) {
     match.turnStartTime = std::chrono::steady_clock::now();

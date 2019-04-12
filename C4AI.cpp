@@ -1,5 +1,7 @@
-
 #include "C4AI.h"
+
+#include <iostream>
+
 #include "TreeSearch.h"
 #include "C4Abstract.h"
 
