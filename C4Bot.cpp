@@ -15,7 +15,7 @@ void C4Bot::move(int timeout) {
     std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
 
     Move m = C4AI::FindBestMove(match);
-    int ms = match.timeElapsedThisTurn();
+    auto ms = match.timeElapsedThisTurn();
 
     std::cerr << "______________________________________________________________________________________________" << std::endl;
     std::cerr << "Search yields optimal column to do move: #" << m << std::endl;
@@ -65,13 +65,10 @@ void C4Bot::setting(std::string &key, std::string &value)
     if (key == "timebank")              match.timebank = std::stoi(value);
     else if (key == "time_per_move")    match.time_per_move = std::stoi(value);
     else if (key == "your_bot")         match.your_bot = value;
-    else if (key == "field_columns")    match.field_columns = std::stoi(value);
-    else if (key == "field_rows")       match.field_rows = std::stoi(value);
-    else if (key == "your_botid") {
-        match.your_botid = std::stoi(value);
-        match.botPlayer = match.your_botid == 0 ? Player::X : Player::O;
-    }
-    else if (key == "player_names") {
+    else if (key == "your_botid")       match.your_botid = std::stoi(value);
+
+    else if (key == "player_names")
+    {
         std::vector<std::string> names = split(value, ',');
         match.player_names[0] = names[0];
         match.player_names[1] = names[1];

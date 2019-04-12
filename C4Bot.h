@@ -10,13 +10,10 @@ struct Match {
     int timebank;                   // The time you can exceed a move with before being disqualified; Usually ~10000 ms
     int time_per_move;              // Time per move; Usually 500 ms
     int your_botid;                 // Your bots team; 0 means Player::X, 1 means Player::O
-    int field_columns;
-    int field_rows;
     int round           = 0;        // The round of the match that is being played (every 2 moves = 1 round)
     std::string player_names[2];    // Names of competing Players/Bots
     std::string your_bot;           // The name of your bot?
 
-    Player botPlayer = Player::X;
     std::chrono::time_point<std::chrono::steady_clock> turnStartTime;
     long long int timeElapsedThisTurn() const;
 

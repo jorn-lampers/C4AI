@@ -72,8 +72,8 @@ Move C4AI::FindBestMove(const Match & match)
     else {
         bool fullMoveTreeEvaluated = true;
         std::cerr << "Moves yielding equal results have been found, picking one using secondary heuristics: " << std::endl;
-        int highest;
-        int startPass2 = match.timeElapsedThisTurn();
+        int highest = -1000;
+        auto startPass2 = match.timeElapsedThisTurn();
         for (Move m : bestMoves) {
             State moveResult = doMove(match.board, m);
             int score = TreeSearch::MiniMaxAB(moveResult, RateSecondaryHeuristic, GetChildStates, 3, false, me, Score::Min, Score::Max, &fullMoveTreeEvaluated);
@@ -83,7 +83,7 @@ Move C4AI::FindBestMove(const Match & match)
                 bestMove = m;
             }
         }
-        int pass2Time = match.timeElapsedThisTurn() - startPass2;
+        auto pass2Time = match.timeElapsedThisTurn() - startPass2;
         std::cerr << "Finished second pass in " << pass2Time << " ms." << std::endl;
 
     }
@@ -154,14 +154,14 @@ int C4AI::RateByPotentialFours(const State &state, const Player &positive) {
                         if(state[row][col+3] == coin) rating += mod*Heur_P4_Abs_H; // Found another coin of player in potential c4
                     }
                 // Vertical:
-                if (row >= 3) // South (row decrement)
+                if (row >= 3) { // South (row decrement)
                     if(state[row-1][col] != opp && state[row-2][col] != opp && state[row-3][col] != opp) {
                         rating += mod*Heur_P4_Abs_V;
                         if(state[row-1][col] == coin) rating += mod*Heur_P4_Abs_V; // Found another coin of player in potential c4
                         if(state[row-2][col] == coin) rating += mod*Heur_P4_Abs_V; // Found another coin of player in potential c4
                         if(state[row-3][col] == coin) rating += mod*Heur_P4_Abs_V; // Found another coin of player in potential c4
                     }
-                else if (row <= 2) // North (row increment)
+                } else if (row <= 2) // North (row increment)
                     if(state[row+1][col] != opp && state[row+2][col] != opp && state[row+3][col] != opp) {
                         rating += mod*Heur_P4_Abs_V;
                         if(state[row+1][col] == coin) rating += mod*Heur_P4_Abs_V; // Found another coin of player in potential c4
